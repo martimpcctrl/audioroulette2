@@ -1,0 +1,46 @@
+name: Build APK
+
+# Roda automaticamente a cada "git push", ou manualmente pelo comando
+# "gh workflow run build.yml"
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip python3-venv git zip unzip \
+            openjdk-17-jdk autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev cmake \
+            libffi-dev libssl-dev
+
+      - name: Instalar Buildozer e Cython
+        run: pip3 install --upgrade pip buildozer cython
+
+      - name: Cache do SDK/NDK do Android (acelera builds futuros)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .buildozer
+            ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            buildozer-
+
+      - name: Compilar o APK
+        run: buildozer -v android debug
+
+      - name: Publicar o APK gerado
+        uses: actions/upload-artifact@v4
+        with:
+          name: audioroulette-apk
+          path: bin/*.apk
+          if-no-files-found: error

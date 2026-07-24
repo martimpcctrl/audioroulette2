@@ -1,0 +1,165 @@
+============================================================
+ AUDIO ROULETTE - LISTA DE ARQUIVOS DE ÁUDIO NECESSÁRIOS
+============================================================
+Coloque todos os arquivos abaixo dentro da pasta:
+
+    /sounds/
+
+na raiz do projeto (mesma pasta do main.py), assim:
+
+    meu_projeto/
+    ├── main.py
+    ├── buildozer.spec
+    ├── compilar.bat
+    └── sounds/
+        ├── boas_vindas.wav
+        ├── sua_vez.wav
+        ├── ... (todos os arquivos listados abaixo)
+
+Formatos aceitos: .wav OU .ogg (pode escolher um ou misturar os dois,
+o jogo carrega qualquer um dos dois automaticamente pelo nome do arquivo,
+sem a extensão).
+
+------------------------------------------------------------
+1. GERAL / INTRODUÇÃO
+------------------------------------------------------------
+boas_vindas.wav          -> Mensagem de abertura do jogo
+novos_itens.wav          -> Anúncio de que novos itens foram distribuídos
+fim_de_jogo_vitoria.wav  -> Tocado quando o jogador vence a partida
+fim_de_jogo_derrota.wav  -> Tocado quando o jogador perde a partida
+
+------------------------------------------------------------
+2. RECARGA DA ARMA (shotgun reload)
+------------------------------------------------------------
+recarregando.wav         -> "Recarregando a arma..."
+balas_reais.wav          -> "...balas reais"
+balas_falsas.wav         -> "...balas falsas"
+numero_1.wav              |
+numero_2.wav               |
+numero_3.wav                | Locução falada dos números 1 a 8
+numero_4.wav                | (usados para anunciar quantidade
+numero_5.wav                | de balas reais/falsas e itens)
+numero_6.wav                |
+numero_7.wav              |
+numero_8.wav              -|
+
+------------------------------------------------------------
+3. TURNOS
+------------------------------------------------------------
+sua_vez.wav               -> "É a sua vez"
+vez_dealer.wav             -> "É a vez do Dealer"
+turno_extra.wav             -> "Turno extra!" (ao acertar bala falsa em si mesmo)
+voce_algemado.wav           -> "Você está algemado, perdeu a vez"
+dealer_algemado.wav         -> "O Dealer está algemado, perdeu a vez"
+
+------------------------------------------------------------
+4. MIRA (aim)
+------------------------------------------------------------
+mira_em_voce.wav           -> "Mirando em você mesmo"
+mira_no_dealer.wav          -> "Mirando no Dealer"
+precisa_mirar.wav           -> Aviso: precisa escolher um alvo antes de atirar
+
+------------------------------------------------------------
+5. SELEÇÃO DE ITENS (navegação por swipe cima/baixo)
+------------------------------------------------------------
+item_nenhum.wav             -> "Arma pronta" (nenhum item selecionado)
+item_cigarro.wav             -> "Cigarro"
+item_cerveja.wav              -> "Cerveja"
+item_serra.wav                -> "Serra"
+item_lupa.wav                  -> "Lupa"
+item_algemas.wav                -> "Algemas"
+item_indisponivel.wav            -> "Você não possui este item"
+
+------------------------------------------------------------
+6. DISPARO DA ARMA
+------------------------------------------------------------
+disparo_martelo.wav          -> Som do martelo/gatilho armando antes do tiro
+tiro_real.wav                 -> Som de tiro de verdade (bala real)
+click_falso.wav                -> Som de clique vazio (bala falsa)
+dano_sofrido.wav                 -> Grito/gemido de dor ao ser atingido
+
+------------------------------------------------------------
+7. USO DOS ITENS (efeitos)
+------------------------------------------------------------
+usar_cigarro.wav              -> Som de acender/tragar o cigarro
+vida_recuperada.wav            -> Confirmação de vida recuperada
+usar_cerveja.wav                 -> Som de abrir/beber a cerveja
+usar_serra.wav                    -> Som de serrar o cano da arma
+serra_aplicada.wav                  -> Confirmação: próximo tiro causa dano dobrado
+usar_lupa.wav                     -> Som de aproximar a lupa do cartucho
+revela_bala_real.wav               -> "É uma bala REAL"
+revela_bala_falsa.wav               -> "É uma bala FALSA"
+usar_algemas.wav                  -> Som de algemas sendo colocadas
+oponente_algemado.wav              -> Confirmação: oponente foi algemado
+sem_efeito.wav                    -> Usado quando o item não teve efeito
+                                       (ex: cigarro com vida cheia, algemar
+                                       quem já está algemado)
+
+------------------------------------------------------------
+8. FEEDBACK DE INTERFACE / ERROS
+------------------------------------------------------------
+gesto_invalido.wav            -> Tocado quando o jogador tenta agir fora
+                                   de sua vez ou de forma inválida
+
+------------------------------------------------------------
+9. MENU PRINCIPAL, INSTRUÇÕES E FASES (novo)
+------------------------------------------------------------
+menu_titulo.wav            -> Fala de abertura do menu
+menu_jogar.wav              -> "Jogar"
+menu_instrucoes.wav          -> "Como jogar"
+menu_sair.wav                 -> "Sair"
+instrucoes_1.wav a instrucoes_5.wav -> Explicação falada dos controles
+fase_iniciando.wav            -> "Fase" (combinado com numero_X)
+fase_concluida.wav             -> Anúncio de fase concluída
+jogo_completo.wav               -> Vitória final da campanha (todas as fases)
+derrota_campanha.wav             -> Derrota, volta ao menu
+blip_menu.wav                     -> Bipe curto de navegação no menu (sintetizado)
+blip_confirmar.wav                 -> Bipe de confirmação de escolha (sintetizado)
+
+------------------------------------------------------------
+10. BÔNUS (opcional, não obrigatório para o jogo funcionar)
+------------------------------------------------------------
+musica_fundo.ogg          -> Música ambiente em loop, tocada em volume
+                              baixo (0.22) durante toda a partida via
+                              pygame.mixer.music (streaming), com fade
+                              out automático ao fim do jogo. Se você
+                              remover este arquivo, o jogo funciona
+                              normalmente, apenas sem música de fundo.
+
+------------------------------------------------------------
+NOTA TÉCNICA: variantes __L / __C / __R
+------------------------------------------------------------
+Cada som agora existe em até 3 arquivos: "<nome>__L.wav" (esquerda,
+você), "<nome>__C.wav" (centro) e "<nome>__R.wav" (direita, Dealer).
+Isso substitui o pygame (que não compila mais para Android) - o
+panorâmico agora já vem gravado dentro do próprio arquivo de áudio,
+e o Kivy escolhe a variante certa sozinho. Se for trocar algum som,
+troque as 3 variantes dele (ou gere seu próprio panning com ffmpeg).
+
+------------------------------------------------------------
+RESUMO — TOTAL DE ARQUIVOS: 40 obrigatórios + 1 bônus (música)
+------------------------------------------------------------
+ESTE ZIP JÁ VEM COM TODOS OS 40 SONS PRONTOS DENTRO DE sounds/:
+  - 5 arquivos reais fornecidos por você (algema, tiro, isqueiro,
+    moedas/novos itens, recarregar) + música de fundo.
+  - 35 narrações em português geradas por TTS offline (espeak-ng).
+  - 6 efeitos sonoros sintetizados digitalmente (martelo, clique
+    vazio, dano, cerveja, serra, lupa).
+Você pode substituir qualquer um deles a qualquer momento — basta
+manter o mesmo nome de arquivo (a extensão .wav ou .ogg pode mudar
+livremente).
+------------------------------------------------------------
+Dica de produção:
+- Para os números (numero_1 a numero_8) e para os nomes dos itens,
+  você pode gravar sua própria voz, usar um narrador contratado,
+  ou gerar via ferramenta de Text-to-Speech (TTS) e exportar em
+  .wav ou .ogg com a taxa de 44100Hz, 16-bit, estéreo ou mono.
+- Sons de "ação" (tiro_real, click_falso, disparo_martelo, usar_serra,
+  usar_cerveja, usar_algemas) ficam mais imersivos com efeitos sonoros
+  realistas (pode-se baixar de bancos de áudio livres de direitos,
+  tipo Freesound.org, respeitando a licença de cada som).
+- O jogo aplica panorâmico estéreo (pan) automaticamente em cima de
+  QUALQUER um desses arquivos — ou seja, mesmo sons mono vão soar
+  à esquerda (você) ou à direita (Dealer) dependendo do contexto,
+  então não é necessário pré-mixar o áudio em estéreo manualmente.
+============================================================

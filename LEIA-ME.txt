@@ -1,0 +1,58 @@
+============================================================
+ AUDIO ROULETTE - COMO COMPILAR O APK (via Docker)
+============================================================
+
+Esse projeto mudou de WSL para Docker para gerar o .apk. É mais
+estável e evita vários problemas que o WSL causava (senha, DNS,
+cache misturado entre builds).
+
+------------------------------------------------------------
+PRÉ-REQUISITO (só precisa fazer uma vez)
+------------------------------------------------------------
+Instale o Docker Desktop (gratuito):
+  https://www.docker.com/products/docker-desktop/
+
+O instalador é um .exe normal do Windows (poucos cliques,
+"Next" > "Next" > "Finish"). Depois de instalar, reinicie o
+computador e abra o Docker Desktop uma vez para ele terminar
+de configurar (pode levar 1-2 minutos na primeira vez).
+
+Depois desse instalador inicial, você NUNCA MAIS precisa abrir
+nenhuma tela visual — todo o resto é 100% linha de comando.
+
+------------------------------------------------------------
+COMO COMPILAR
+------------------------------------------------------------
+1. Confirme que o Docker Desktop está aberto e rodando (o
+   ícone dele fica na bandeja do sistema, perto do relógio).
+2. Dê dois cliques em "compilar.bat" (nesta mesma pasta).
+3. Aguarde. Na primeira vez ele vai:
+     a) Construir o ambiente de build (alguns minutos)
+     b) Baixar o Android SDK/NDK (vários GB - pode demorar
+        30-60 minutos dependendo da internet)
+     c) Compilar o jogo de verdade
+4. Quando terminar, o arquivo .apk estará na pasta "bin\".
+
+Nas próximas vezes que você rodar "compilar.bat" (depois de
+alterar o código, por exemplo), vai ser bem mais rápido, porque
+o Docker guarda em cache tanto o ambiente quanto o SDK/NDK já
+baixado.
+
+------------------------------------------------------------
+SE DER ERRO
+------------------------------------------------------------
+Tudo que aparece na tela também é salvo automaticamente em
+"build_log.txt", nesta mesma pasta. Se algo der errado, me
+envie esse arquivo (como anexo) que eu identifico o problema.
+
+------------------------------------------------------------
+ARQUIVOS DESTE PROJETO
+------------------------------------------------------------
+main.py             -> Código do jogo (Kivy + Pygame)
+buildozer.spec       -> Configuração do build Android
+Dockerfile            -> Define o ambiente de build (Docker)
+compilar.bat           -> Dê dois cliques aqui para compilar
+compilar.ps1             -> Lógica real do build (chamado pelo .bat)
+sounds/                    -> Todos os áudios do jogo
+sons_necessarios.txt        -> Lista e descrição de cada som
+============================================================
