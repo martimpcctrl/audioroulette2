@@ -1,0 +1,83 @@
+============================================================
+ CONFIGURAR O FIREBASE (modo online) - 100% por terminal
+============================================================
+
+Isso só precisa ser feito UMA VEZ. São 3 blocos de comando.
+
+------------------------------------------------------------
+BLOCO 1 - Instalar a ferramenta do Firebase
+------------------------------------------------------------
+No PowerShell (não precisa ser administrador):
+
+    npm install -g firebase-tools
+
+(Se der erro dizendo que "npm" não é reconhecido, me avisa - significa
+que o Node.js não está instalado, e eu te passo o comando pra instalar.)
+
+------------------------------------------------------------
+BLOCO 2 - Login e criação do projeto
+------------------------------------------------------------
+    firebase login
+
+Isso abre o navegador UMA VEZ pra você confirmar com sua conta Google.
+Depois disso, feche o navegador e volte pro terminal.
+
+Confirme que funcionou:
+
+    firebase projects:list
+
+Agora crie o projeto (troque "SEUNOME" por algo único, tipo seu nome
+de usuário, já que o nome precisa ser único no mundo inteiro):
+
+    firebase projects:create audioroulette-SEUNOME --display-name "Audio Roulette Online"
+
+Guarde o ID exato que ele confirmar (algo como "audioroulette-seunome"),
+vamos precisar dele no próximo bloco.
+
+------------------------------------------------------------
+BLOCO 3 - Registrar o app Android e gerar o arquivo de configuração
+------------------------------------------------------------
+Troque SEU_PROJETO pelo ID exato que apareceu no bloco anterior:
+
+    firebase apps:create android com.audiogames.audioroulette --project SEU_PROJETO
+
+Isso retorna um "App ID" (algo como 1:123456789:android:abcdef).
+Copie esse ID e use no comando abaixo, no lugar de SEU_APP_ID:
+
+    firebase apps:sdkconfig android SEU_APP_ID --project SEU_PROJETO --out google-services.json
+
+Isso cria um arquivo chamado "google-services.json" na pasta atual.
+
+------------------------------------------------------------
+BLOCO 4 - Ativar o banco de dados em tempo real
+------------------------------------------------------------
+O Firebase CLI ainda não tem um comando direto pra criar a instância
+do Realtime Database, então esse é o ÚNICO passo que precisa do
+navegador (uma vez só):
+
+    firebase database:instances:create audioroulette-SEUNOME-default-rtdb --project SEU_PROJETO --location us-central1
+
+Se esse comando não funcionar na sua versão do firebase-tools, me avisa
+que eu te passo o link direto do console pra fazer isso num clique.
+
+------------------------------------------------------------
+O QUE FAZER COM O ARQUIVO GERADO
+------------------------------------------------------------
+Depois que o "google-services.json" for criado, mova ele pra dentro
+da pasta "app" do seu projeto (mesmo nível de "build.gradle.kts" que
+fica dentro de app/):
+
+    move google-services.json app\google-services.json
+
+------------------------------------------------------------
+BLOCO 5 - Aplicar as regras de segurança do banco de dados
+------------------------------------------------------------
+Isso já vem pronto no projeto (arquivo "database.rules.json" e
+"firebase.json"). Depois de colocar o google-services.json no lugar,
+rode dentro da pasta do projeto:
+
+    firebase deploy --only database --project SEU_PROJETO
+
+Depois disso, me avise que terminou - eu já vou ter finalizado o
+resto do código nesse meio tempo.
+============================================================
