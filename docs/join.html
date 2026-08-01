@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Convite - AudioRoulette</title>
+<style>
+  body {
+    background: #000;
+    color: #fff;
+    font-family: sans-serif;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  h1 { font-size: 24px; }
+  p { font-size: 18px; line-height: 1.5; }
+  .codigo {
+    font-size: 32px;
+    letter-spacing: 8px;
+    font-weight: bold;
+    margin: 20px 0;
+  }
+  a.botao {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 14px 24px;
+    background: #ffffff;
+    color: #000000;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <h1>Convite pra sala do AudioRoulette</h1>
+  <p id="status">Abrindo o aplicativo...</p>
+  <div class="codigo" id="codigoTexto" aria-live="polite"></div>
+  <a class="botao" id="botaoAbrir" href="#" style="display:none">Abrir o AudioRoulette</a>
+
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var codigo = params.get('c');
+    var statusEl = document.getElementById('status');
+    var codigoEl = document.getElementById('codigoTexto');
+    var botaoEl = document.getElementById('botaoAbrir');
+
+    if (codigo && /^[0-9]{4}$/.test(codigo)) {
+      var linkApp = 'audioroulette://entrar/' + codigo;
+      codigoEl.textContent = codigo;
+      botaoEl.href = linkApp;
+      botaoEl.style.display = 'inline-block';
+
+      // Tenta abrir o app automaticamente
+      window.location.href = linkApp;
+
+      // Se depois de um tempo a pessoa ainda estiver vendo essa página,
+      // o app provavelmente não está instalado - mostra o código pra
+      // digitar manualmente em vez de deixar a pessoa sem saída.
+      setTimeout(function () {
+        statusEl.textContent =
+          'Se o AudioRoulette não abriu sozinho, você ainda não tem o app instalado. ' +
+          'Instale o app e depois entre na sala com este código:';
+      }, 2500);
+    } else {
+      statusEl.textContent = 'Link de convite inválido ou incompleto.';
+    }
+  </script>
+</body>
+</html>
