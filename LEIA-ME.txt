@@ -1,0 +1,56 @@
+============================================================
+ AUDIO ROULETTE - Versão Android nativa (Kotlin + Gradle)
+============================================================
+
+Esse é um projeto NOVO, escrito do zero em Kotlin, usando o Gradle
+(ferramenta oficial de build do Android) em vez do Buildozer/Kivy.
+
+NOVIDADES (última atualização):
+- Menu de Configurações: velocidade da voz, volume dos efeitos, volume
+  da música, e dificuldade (Fácil/Normal/Difícil) - tudo salvo entre
+  sessões.
+- Campanha expandida de 5 para 8 fases.
+- Gesto novo: toque com 2 dedos uma vez = ouvir sua vida. Toque com
+  2 dedos duas vezes = ouvir a vida do oponente/Dealer.
+- MODO ONLINE: jogue com um amigo de verdade, cada um no seu celular,
+  via Firebase. Um cria a sala (recebe um código de 4 números falado),
+  o outro entra digitando esse código por gestos.
+
+------------------------------------------------------------
+COMO SUBSTITUIR O REPOSITÓRIO ANTIGO
+------------------------------------------------------------
+Como a estrutura mudou completamente (não é mais Python), o mais
+simples é APAGAR TUDO da pasta do projeto (menos a pasta oculta
+".git", que guarda a ligação com o GitHub) e colocar esses arquivos
+novos no lugar.
+
+No PowerShell, dentro da sua pasta do projeto atual:
+
+1. Apague tudo, EXCETO a pasta .git:
+   Get-ChildItem -Exclude .git | Remove-Item -Recurse -Force
+
+2. Extraia o conteúdo deste zip diretamente nessa mesma pasta
+   (os arquivos main.py, buildozer.spec, Dockerfile antigos não
+   existem mais nessa versão - foram substituídos).
+
+3. Envie pro GitHub:
+   git add .
+   git commit -m "reescreve o jogo em Kotlin/Gradle"
+   git push
+
+4. Dispare o build:
+   gh workflow run build.yml
+   gh run watch
+
+------------------------------------------------------------
+ESTRUTURA DO PROJETO
+------------------------------------------------------------
+app/src/main/kotlin/.../MainActivity.kt   -> gestos de toque
+app/src/main/kotlin/.../GameCore.kt        -> regras do jogo, itens, fases
+app/src/main/kotlin/.../MenuCore.kt         -> menu principal
+app/src/main/kotlin/.../Story.kt             -> diálogos e história
+app/src/main/kotlin/.../AudioManager.kt       -> efeitos sonoros (SoundPool)
+app/src/main/kotlin/.../VoiceManager.kt        -> narração falada (TTS)
+app/src/main/res/raw/                           -> efeitos sonoros (.wav/.ogg)
+.github/workflows/build.yml                      -> build automático
+============================================================

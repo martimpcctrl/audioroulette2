@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "salas": {
+      "$codigo": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "usuarios": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
