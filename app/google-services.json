@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1020201442607",
+    "firebase_url": "https://audioroulette-martim-default-rtdb.firebaseio.com",
+    "project_id": "audioroulette-martim",
+    "storage_bucket": "audioroulette-martim.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1020201442607:android:1427ba7bba3acb28ab95da",
+        "android_client_info": {
+          "package_name": "com.audiogames.audioroulette"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1020201442607-pog5rhi423o3gpacmokk1nj4bm2d6pqu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.audiogames.audioroulette",
+            "certificate_hash": "1e777c02455dd4533dd97e4ab7665d01fcad4d38"
+          }
+        },
+        {
+          "client_id": "1020201442607-hs322svp7fdpnbli8tg844hom0q18l6q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFwzrYtsqjFEgdLyXlhQXEKHP6qI4xOng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1020201442607-hs322svp7fdpnbli8tg844hom0q18l6q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
