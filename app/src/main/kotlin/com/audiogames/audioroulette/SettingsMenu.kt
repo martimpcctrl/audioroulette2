@@ -24,7 +24,7 @@ class SettingsMenu(
 
     private val speechRates = listOf(0.7f, 0.85f, 1.0f, 1.15f, 1.3f, 1.5f, 1.75f)
     private val volumeSteps = listOf(0f, 0.25f, 0.5f, 0.75f, 1.0f)
-    private val campos = listOf("usuario", "conta_google", "voz", "efeitos", "musica", "dificuldade", "voltar")
+    private val campos = listOfNotNull("usuario", if (LOGIN_GOOGLE_ATIVO) "conta_google" else null, "voz", "efeitos", "musica", "dificuldade", "voltar")
 
     var index = 0
     var active = false

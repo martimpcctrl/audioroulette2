@@ -63,8 +63,9 @@ class WelcomeActivity : Activity() {
         }
 
         val explicacao = TextView(this).apply {
-            text = "Antes de começar, crie uma conta. Você pode usar só um nome local no aparelho, " +
+            text = if (LOGIN_GOOGLE_ATIVO) "Antes de começar, crie uma conta. Você pode usar só um nome local no aparelho, " +
                 "ou entrar com sua conta Google pra manter seu progresso salvo na nuvem."
+            else "Antes de começar, escolha um nome de usuário. É o nome que o seu oponente ouve no modo online."
             textSize = 17f
             setTextColor(Color.LTGRAY)
             setPadding(0, 0, 0, padding * 2)
@@ -109,8 +110,10 @@ class WelcomeActivity : Activity() {
 
         layout.addView(titulo)
         layout.addView(explicacao)
-        layout.addView(botaoGoogle)
-        layout.addView(separador)
+        if (LOGIN_GOOGLE_ATIVO) {
+            layout.addView(botaoGoogle)
+            layout.addView(separador)
+        }
         layout.addView(botaoContaLocal)
         layout.addView(campoNome)
         layout.addView(botaoConfirmarNome)
@@ -120,7 +123,7 @@ class WelcomeActivity : Activity() {
         setContentView(scroll)
 
         titulo.requestFocus()
-        titulo.announceForAccessibility("Seja bem-vindo ao AudioRoulette! Escolha como criar sua conta.")
+        titulo.announceForAccessibility(if (LOGIN_GOOGLE_ATIVO) "Seja bem-vindo ao AudioRoulette! Escolha como criar sua conta." else "Seja bem-vindo ao AudioRoulette! Escolha um nome de usuário.")
     }
 
     private fun alternarCampoNome() {
