@@ -23,6 +23,9 @@ jobs:
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # o pacote antigo "tools" não existe mais no SDK novo e fazia o passo falhar
+          packages: 'platform-tools'
 
       - name: Aceitar licencas do Android SDK (garantia extra)
         run: yes | sdkmanager --licenses || true
