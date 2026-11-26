@@ -212,7 +212,20 @@ class OnlineGameCore(
     }
 
     fun sair() {
-        salaRef?.let { ref -> listenerAtivo?.let { ref.removeEventListener(it) } }
+        val ref = salaRef
+        if (ref != null) {
+            listenerAtivo?.let { ref.removeEventListener(it) }
+            if (active && estadoAtual.estado == "jogando" && estadoAtual.vencedor == null) {
+                // saiu no meio: o outro vence e fica sabendo (antes a sala ficava parada para sempre)
+                val novo = estadoAtual.copy(estado = "finalizado", vencedor = oponenteLado())
+                novo.ultimaAcaoId = estadoAtual.ultimaAcaoId + 1
+                novo.ultimaAcaoTexto = "ABANDONOU|$meuLado"
+                ref.setValue(novo)
+                if (!resultadoJaRegistrado) stats.registrarDerrota()
+            } else if (estadoAtual.estado == "aguardando" && meuLado == "jogador1") {
+                ref.removeValue() // ninguém entrou: apaga a sala
+            }
+        }
         listenerAtivo = null
         active = false
         salaRef = null
@@ -220,6 +233,9 @@ class OnlineGameCore(
         aim = null
         selectedIndex = 0
         ultimoIdNarrado = 0
+        escolhendoRoubo = false
+        estadoRouboBase = null
+        resultadoJaRegistrado = false // senão o resultado da próxima partida online não era contado
         audio.stopMusic()
     }
 
@@ -282,8 +298,14 @@ class OnlineGameCore(
     }
 
     private fun publicarEstado(novo: SalaOnline, textoAcao: String) {
+        var texto = textoAcao
+        // a espingarda esvaziou (tiro ou cerveja): recarrega na mesma jogada, com itens novos,
+        // em vez de gastar o próximo toque de quem joga só para recarregar
+        if (novo.estado == "jogando" && novo.vencedor == null && novo.shells.isEmpty()) {
+            texto += ";" + encherEspingarda(novo)
+        }
         novo.ultimaAcaoId = estadoAtual.ultimaAcaoId + 1
-        novo.ultimaAcaoTexto = textoAcao
+        novo.ultimaAcaoTexto = texto
         estadoAtual = novo
         salaRef?.setValue(novo)
     }
@@ -493,18 +515,19 @@ class OnlineGameCore(
     }
 
     private fun recarregar() {
+        val novo = estadoAtual.copy()
+        publicarEstado(novo, encherEspingarda(novo))
+    }
+
+    // põe cartuchos novos e entrega itens aos dois (2 a 4, respeitando o limite); devolve o texto da narração
+    private fun encherEspingarda(novo: SalaOnline): String {
         val total = (2..8).random()
         val reais = (1 until total).random()
         val falsas = total - reais
-        val novasShells = (List(reais) { true } + List(falsas) { false }).shuffled()
-        val novo = estadoAtual.copy(shells = novasShells)
-
-        // Toda recarga também entrega novos itens pra cada jogador, igual
-        // ao modo offline (2 a 4 itens, respeitando o limite máximo).
-        setItems(novo, "jogador1", adicionarItensAleatorios(getItems(estadoAtual, "jogador1")))
-        setItems(novo, "jogador2", adicionarItensAleatorios(getItems(estadoAtual, "jogador2")))
-
-        publicarEstado(novo, "RECARREGOU|$reais|$falsas")
+        novo.shells = (List(reais) { true } + List(falsas) { false }).shuffled()
+        setItems(novo, "jogador1", adicionarItensAleatorios(getItems(novo, "jogador1")))
+        setItems(novo, "jogador2", adicionarItensAleatorios(getItems(novo, "jogador2")))
+        return "RECARREGOU|$reais|$falsas"
     }
 
     private fun adicionarItensAleatorios(atuais: Map<String, Int>): Map<String, Int> {
@@ -525,29 +548,49 @@ class OnlineGameCore(
 
     private fun panPara(lado: String): Float = if (lado == meuLado) PAN_SELF else PAN_DEALER
 
+    // uma jogada pode ter mais de uma parte, separadas por ";" (por exemplo o tiro e a recarga)
     private fun narrarAcao(texto: String) {
         if (texto.isEmpty()) return
+        var anunciarVez = true
+        for (parte in texto.split(";")) {
+            if (!narrarParte(parte)) anunciarVez = false
+        }
+        if (anunciarVez) anunciarFimOuVez()
+    }
 
+    // devolve false quando a própria parte já disse de quem é a vez (ou não é para dizer)
+    private fun narrarParte(texto: String): Boolean {
         if (texto == "INICIO") {
             audio.playMusic("musica_fundo", true)
             voice.say("A partida começou!") {
                 voice.say(if (estadoAtual.turno == meuLado) "Sua vez." else "Vez de ${nomeOponente()}.")
             }
-            return
+            return false
         }
 
         val partes = texto.split("|")
         when (partes.getOrNull(0)) {
             "REVANCHE_PEDIDA" -> {
-                val quemPediu = partes.getOrNull(1) ?: return
+                val quemPediu = partes.getOrNull(1) ?: return false
                 if (quemPediu != meuLado) {
                     voice.say("${nomeOponente()} quer jogar de novo! Toque duas vezes pra aceitar.")
                 }
-                return
+                return false
+            }
+            "ABANDONOU" -> {
+                val quem = partes.getOrNull(1) ?: return true
+                if (quem == meuLado) return false
+                audio.stopMusic()
+                if (!resultadoJaRegistrado) {
+                    resultadoJaRegistrado = true
+                    stats.registrarVitoria()
+                }
+                voice.say("${nomeOponente()} saiu da partida. Você venceu! Aperte voltar pra sair.")
+                return false
             }
             "ATIROU" -> {
-                val alvo = partes.getOrNull(2) ?: return
-                val tipo = partes.getOrNull(3) ?: return
+                val alvo = partes.getOrNull(2) ?: return true
+                val tipo = partes.getOrNull(3) ?: return true
                 val pulou = partes.getOrNull(5) ?: "none"
                 audio.play("disparo_martelo", PAN_CENTER)
                 if (tipo == "real") {
@@ -565,8 +608,8 @@ class OnlineGameCore(
                 }
             }
             "ITEM" -> {
-                val autor = partes.getOrNull(1) ?: return
-                val item = partes.getOrNull(2) ?: return
+                val autor = partes.getOrNull(1) ?: return true
+                val item = partes.getOrNull(2) ?: return true
                 val detalhe = partes.getOrNull(3) ?: ""
                 val pan = panPara(autor)
                 val nome = ITEM_NOMES[item] ?: item
@@ -606,7 +649,10 @@ class OnlineGameCore(
                 voice.say("Recarregando. $reais balas reais, $falsas falsas. Novos itens chegaram.")
             }
         }
+        return true
+    }
 
+    private fun anunciarFimOuVez() {
         if (estadoAtual.estado == "finalizado" && estadoAtual.vencedor != null) {
             audio.stopMusic()
             val euVenci = estadoAtual.vencedor == meuLado

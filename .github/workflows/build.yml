@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -29,6 +29,8 @@ jobs:
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
 
       - name: Preparar chave de assinatura fixa
         env:
@@ -42,39 +44,31 @@ jobs:
           [ -z "$SIGNING_KEY_ALIAS" ] && FALTANDO="$FALTANDO SIGNING_KEY_ALIAS"
           if [ -n "$FALTANDO" ]; then
             echo "::error::Segredo(s) faltando:$FALTANDO"
-            echo "::error::Sem a chave fixa completa, cada build usaria uma assinatura diferente e as atualizacoes automaticas do app nao funcionariam."
+            echo "::error::Sem a chave fixa completa, o app nao pode ser enviado para a Play Store."
             echo "::error::Configure com 'gh secret set' antes de compilar. Build cancelado de proposito."
             exit 1
           fi
           echo "$SIGNING_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/audioroulette-release.keystore"
           echo "SIGNING_KEYSTORE_PATH=$RUNNER_TEMP/audioroulette-release.keystore" >> "$GITHUB_ENV"
 
-      - name: Compilar o APK
+      - name: Compilar o app (AAB para a Play Store e APK para testar)
         env:
           SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
         run: |
-          gradle assembleDebug --stacktrace \
-            -PappVersionCode=${{ github.run_number }} \
-            -PappVersionName="v1.${{ github.run_number }}"
+          gradle bundleRelease assembleRelease --stacktrace -PappVersionCode=${{ github.run_number }} -PappVersionName="1.${{ github.run_number }}"
 
-      - name: Publicar o APK gerado (artifact temporario)
+      - name: Guardar o AAB (é este que vai para a Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: audioroulette-playstore-aab
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      - name: Guardar o APK (para instalar e testar no celular)
         uses: actions/upload-artifact@v4
         with:
           name: audioroulette-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-
-      - name: Criar Release no GitHub (pro atualizador do app)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSAO="v1.${{ github.run_number }}"
-          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
-          cp "$APK_PATH" "audioroulette-$VERSAO.apk"
-          gh release delete "$VERSAO" --yes --cleanup-tag --repo "${{ github.repository }}" || true
-          gh release create "$VERSAO" "audioroulette-$VERSAO.apk" \
-            --repo "${{ github.repository }}" \
-            --title "Versão $VERSAO" \
-            --notes "Build automático gerado pelo GitHub Actions (execução número ${{ github.run_number }})."

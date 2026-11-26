@@ -14,7 +14,7 @@ object Story {
         "Uma voz grave fala do outro lado da mesa: bem-vindo à Sala de Espera.",
         "Aqui, só existe uma regra: sobreviva ao Dealer, rodada após rodada, e você é livre.",
         "Entre nós, uma espingarda carregada com balas reais e falsas, embaralhadas.",
-        "Cinco desafios te separam da saída. Prepare-se."
+        "Oito desafios te separam da saída. Prepare-se."
     )
 
     val nomesFase = mapOf(
@@ -72,7 +72,7 @@ object Story {
     val campanhaVencidaFalas = listOf(
         "A última porta se abre para a luz do dia. Você sobreviveu à Sala de Espera.",
         "O Dealer não vai mais provocar ninguém. Você está livre.",
-        "Cinco fases. Um sobrevivente. Você."
+        "Oito fases. Um sobrevivente. Você."
     )
 
     val derrotaFalas = listOf(

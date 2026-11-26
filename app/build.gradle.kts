@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.audiogames.audioroulette"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.audiogames.audioroulette"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36 // a Play Store pede o Android mais novo para apps novos
         versionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 1
         versionName = (project.findProperty("appVersionName") as String?) ?: "dev"
     }
@@ -39,6 +39,13 @@ android {
 
     buildTypes {
         debug {
+            isMinifyEnabled = false
+            if (keystorePath != null) {
+                signingConfig = signingConfigs.getByName("fixa")
+            }
+        }
+        // a versão da Play Store: o .aab assinado com a chave fixa (a chave de envio da Play)
+        release {
             isMinifyEnabled = false
             if (keystorePath != null) {
                 signingConfig = signingConfigs.getByName("fixa")

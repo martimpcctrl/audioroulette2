@@ -34,6 +34,8 @@ class Fighter(val name: String, val pan: Float) {
     var hp: Int = 3
     val items: MutableMap<String, Int> = ITEM_KEYS.associateWith { 0 }.toMutableMap()
     var handcuffed: Boolean = false
+    // quem acabou de perder a vez algemado só pode ser algemado de novo depois de jogar uma vez
+    var podeSerAlgemado: Boolean = true
     var sawed: Boolean = false
     var knowsShell: Boolean? = null
 
@@ -98,9 +100,8 @@ class GameCore(
             Dificuldade.DIFICIL -> maxOf(1, itemMinBase - 1)
             Dificuldade.NORMAL -> itemMinBase
         }
-        // itemMin nunca pode chegar a 4: o sorteio é Random.nextInt(itemMin, 4),
-        // e esse limite superior precisa ser sempre maior que o inferior.
-        val itemMin = minOf(itemMinRaw, 3)
+        // o sorteio é Random.nextInt(itemMin, MAX_ITEMS_TOTAL + 1): de itemMin a 4 itens
+        val itemMin = minOf(itemMinRaw, MAX_ITEMS_TOTAL)
         return Triple(maxHp, dealerSkill, itemMin)
     }
 
@@ -147,6 +148,8 @@ class GameCore(
         dealer.hp = maxHp
         player.items.replaceAll { _, _ -> 0 }
         dealer.items.replaceAll { _, _ -> 0 }
+        player.handcuffed = false; dealer.handcuffed = false
+        player.podeSerAlgemado = true; dealer.podeSerAlgemado = true
         turn = "player"
         aim = null
         selectedIndex = 0
@@ -199,7 +202,7 @@ class GameCore(
         val (_, _, itemMin) = dificuldade()
 
         // Dealer recebe itens aleatórios direto, sem interação
-        val nDealer = Random.nextInt(itemMin, 4)
+        val nDealer = Random.nextInt(itemMin, MAX_ITEMS_TOTAL + 1)
         repeat(nDealer) {
             if (dealer.totalItems() < MAX_ITEMS_TOTAL) {
                 val item = ITEM_KEYS[Random.nextInt(ITEM_KEYS.size)]
@@ -210,7 +213,7 @@ class GameCore(
         // Jogador também recebe itens sorteados automaticamente - sem
         // escolha manual, igual ao dealer e ao modo online (é assim que
         // a regra real do jogo funciona: a mesa entrega os itens).
-        val nPlayer = Random.nextInt(itemMin, 4)
+        val nPlayer = Random.nextInt(itemMin, MAX_ITEMS_TOTAL + 1)
         val itensRecebidos = mutableListOf<String>()
         repeat(nPlayer) {
             if (player.totalItems() < MAX_ITEMS_TOTAL) {
@@ -304,6 +307,7 @@ class GameCore(
 
         if (fighter.handcuffed) {
             fighter.handcuffed = false
+            fighter.podeSerAlgemado = false
             val txt = if (who == "dealer") "O Dealer está algemado. Perdeu a vez." else "Você está algemado. Perdeu a vez."
             voice.say(txt) {
                 val other = if (who == "player") "dealer" else "player"
@@ -312,6 +316,7 @@ class GameCore(
             return
         }
 
+        fighter.podeSerAlgemado = true
         if (who == "player") {
             busy = false
             voice.say("Sua vez.")
@@ -325,12 +330,29 @@ class GameCore(
         }
     }
 
+    // espingarda vazia: recarrega e a mesa entrega itens novos para os dois (como no modo online);
+    // enquanto isso ninguém age
     fun checkShellsEmptyAndMaybeReload(onComplete: () -> Unit) {
         if (shells.isEmpty()) {
-            postDelay(300) { reloadShells(onComplete) }
+            val estavaLivre = !busy
+            busy = true
+            postDelay(300) {
+                reloadShells {
+                    giveItems {
+                        if (estavaLivre && turn == "player") busy = false
+                        onComplete()
+                    }
+                }
+            }
         } else {
             onComplete()
         }
+    }
+
+    // o primeiro cartucho saiu ou mudou: o que alguém viu com a lupa não vale mais
+    private fun esquecerPrimeiroCartucho() {
+        player.knowsShell = null
+        dealer.knowsShell = null
     }
 
     // -------------------- AÇÕES DO JOGADOR --------------------
@@ -406,6 +428,7 @@ class GameCore(
                 audio.play("usar_cerveja", pan)
                 if (shells.isNotEmpty()) {
                     val ejected = shells.removeAt(0)
+                    esquecerPrimeiroCartucho()
                     voice.say("Cerveja. Cartucho ejetado: ${if (ejected) "bala real" else "bala falsa"}.")
                     checkShellsEmptyAndMaybeReload {}
                 }
@@ -427,6 +450,13 @@ class GameCore(
                 }
             }
             "algemas" -> {
+                if (other.handcuffed || !other.podeSerAlgemado) {
+                    // não gasta o item: não dá pra usar agora
+                    if (!isStolen) user.items[item] = (user.items[item] ?: 0) + 1
+                    val guardadas = if (isStolen) " As algemas não tiveram efeito." else " Algemas guardadas."
+                    if (user === player) voice.say((if (other.handcuffed) "O oponente já está algemado." else "O oponente acabou de se soltar das algemas, não dá pra algemar de novo agora.") + guardadas)
+                    return
+                }
                 audio.play("usar_algemas", pan)
                 if (!other.handcuffed) {
                     other.handcuffed = true
@@ -458,6 +488,7 @@ class GameCore(
                 audio.play("usar_inversor", pan)
                 if (shells.isNotEmpty()) {
                     shells[0] = !shells[0]
+                    if (user === dealer) dealer.knowsShell = dealer.knowsShell?.not() else dealer.knowsShell = null
                     voice.say("Inversor usado. O próximo cartucho foi invertido.")
                 }
             }
@@ -502,8 +533,11 @@ class GameCore(
             return
         }
 
+        // até a próxima vez ninguém age (dois toques rápidos davam dois tiros)
+        busy = true
         val target = if (aimChoice == "self") shooter else other
         val shellReal = shells.removeAt(0)
+        esquecerPrimeiroCartucho()
         val damage = if (shooter.sawed) 2 else 1
         shooter.sawed = false
 
@@ -538,8 +572,11 @@ class GameCore(
     }
 
     private fun afterShot(shooter: Fighter, aimChoice: String, wasReal: Boolean) {
-        checkShellsEmptyAndMaybeReload {}
+        // se a espingarda esvaziou, recarrega antes da próxima vez
+        checkShellsEmptyAndMaybeReload { seguirDepoisDoTiro(shooter, aimChoice, wasReal) }
+    }
 
+    private fun seguirDepoisDoTiro(shooter: Fighter, aimChoice: String, wasReal: Boolean) {
         val extraTurn = (aimChoice == "self") && !wasReal
 
         if (extraTurn) {
@@ -659,7 +696,7 @@ class GameCore(
             return
         }
 
-        if (!player.handcuffed && (dealer.items["algemas"] ?: 0) > 0 && Random.nextFloat() < dealerSkill * 0.5f) {
+        if (!player.handcuffed && player.podeSerAlgemado && (dealer.items["algemas"] ?: 0) > 0 && Random.nextFloat() < dealerSkill * 0.5f) {
             useItem(dealer, player, "algemas")
             postDelay(900) { dealerTakeAction() }
             return
@@ -681,7 +718,15 @@ class GameCore(
             val totalLeft = shells.size
             val probReal = if (totalLeft > 0) realLeft.toFloat() / totalLeft else 0.5f
             val bias = 0.15f + dealerSkill * 0.1f
-            aimChoice = if (Random.nextFloat() < probReal * 0.8f + bias) "dealer" else "self"
+            aimChoice = when {
+                // contando o que já saiu, a conta é certa: só falsas sobrando, atira em si; só reais, no jogador
+                realLeft == 0 -> "self"
+                realLeft == totalLeft -> "dealer"
+                else -> if (Random.nextFloat() < probReal * 0.8f + bias) "dealer" else "self"
+            }
+            if (realLeft == totalLeft && (dealer.items["serra"] ?: 0) > 0 && Random.nextFloat() < dealerSkill) {
+                useItem(dealer, player, "serra")
+            }
         }
 
         postDelay(600) { fireWeapon(dealer, player, aimChoice) }

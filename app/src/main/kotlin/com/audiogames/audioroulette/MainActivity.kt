@@ -39,7 +39,6 @@ class MainActivity : Activity() {
     private lateinit var onlineCore: OnlineGameCore
     private lateinit var onlineMenu: OnlineMenu
     private lateinit var onlineStats: OnlineStatsManager
-    private lateinit var updateManager: UpdateManager
     private lateinit var googleAuth: GoogleAuthManager
     private lateinit var cloudProfile: CloudProfileManager
 
@@ -106,7 +105,6 @@ class MainActivity : Activity() {
         saveManager = SaveManager(this)
         achievementManager = AchievementManager(this)
         onlineStats = OnlineStatsManager(this)
-        updateManager = UpdateManager(this)
         googleAuth = GoogleAuthManager(this)
         cloudProfile = CloudProfileManager(saveManager, achievementManager, onlineStats)
         audioManager = AudioManager(this).apply {
@@ -125,7 +123,7 @@ class MainActivity : Activity() {
             onOpenSettings = { openSettings() },
             onOpenOnline = { openOnlineMenu() },
             onOpenAchievements = { openAchievements() },
-            onCheckUpdate = { checkUpdate(manual = true) },
+            onShowCredits = { showCredits() },
             onShowStats = { showStats() },
             onOpenTutorialWeb = { abrirTutorialWeb() },
             onQuit = { finishAffinity() }
@@ -201,7 +199,6 @@ class MainActivity : Activity() {
             )
         }
 
-        checkUpdate(manual = false)
         handleDeepLink(intent)
 
         if (!settingsManager.temUsername() && !googleAuth.estaLogadoComGoogle()) {
@@ -231,8 +228,6 @@ class MainActivity : Activity() {
         voiceManager.say("Convite recebido! Entrando na sala $codigo automaticamente.")
         onlineMenu.submeterCodigo(codigo)
     }
-
-    private var atualizacaoJaAnunciada = false
 
     private fun showStats() {
         val vOffline = saveManager.vitoriasOffline()
@@ -293,30 +288,14 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun checkUpdate(manual: Boolean) {
-        if (manual) {
-            voiceManager.say("Verificando atualizações...")
-        }
-        updateManager.verificarSilenciosamente { atualizacao ->
-            atualizacaoJaAnunciada = true
-            voiceManager.say(
-                "Nova versão disponível: ${atualizacao.versionName}. Baixando e preparando a instalação. " +
-                    "O Android vai pedir sua confirmação antes de instalar."
-            ) {
-                updateManager.baixarEInstalar(
-                    atualizacao,
-                    onProgresso = { voiceManager.say(it) },
-                    onErro = { voiceManager.say(it) }
-                )
-            }
-        }
-        if (manual) {
-            statusLabel.postDelayed({
-                if (!atualizacaoJaAnunciada) {
-                    voiceManager.say("Você já está na versão mais recente. Versão instalada: ${BuildConfig.VERSION_NAME}, código ${BuildConfig.VERSION_CODE}.")
-                }
-            }, 4000)
-        }
+    // As atualizações agora vêm pela Play Store; o menu tem os créditos no lugar do atualizador.
+    private fun showCredits() {
+        setStatus("CRÉDITOS")
+        voiceManager.say(
+            "Audio Roulette, versão ${BuildConfig.VERSION_NAME}. " +
+                "Criado e desenvolvido por Martim Alves de Souto Neto. " +
+                "Um jogo feito para ser jogado só com o som, por todo mundo. Obrigado por jogar!"
+        )
     }
 
     private fun setStatus(text: String) {
@@ -661,13 +640,38 @@ class MainActivity : Activity() {
         return true
     }
 
+    // Voltar leva sempre para o menu anterior; só fecha o jogo quando já está no menu principal.
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
-        if (mode == "online_playing" && onlineCore.active) {
-            backToMenuFromOnline()
-        } else {
-            super.onBackPressed()
+        when (mode) {
+            "online_playing", "online_menu" -> backToMenuFromOnline()
+            "settings" -> backToMenuFromSettings()
+            "achievements" -> backToMenuFromAchievements()
+            "online_code_input" -> {
+                esconderTeclado()
+                mode = "online_menu"
+                onlineMenu.open()
+            }
+            "username_input" -> {
+                esconderTeclado()
+                if (usernameVoltarPara == "online") { mode = "online_menu"; onlineMenu.open() } else { mode = "settings"; settingsMenu.open() }
+            }
+            "playing" -> {
+                if (gameCore.active && !gameCore.gameOver) {
+                    saveManager.salvar(gameCore)
+                    voiceManager.clearQueue()
+                    voiceManager.say("Jogo salvo. Dá pra continuar depois pelo menu.")
+                }
+                backToMenu()
+            }
+            else -> super.onBackPressed()
         }
+    }
+
+    private fun esconderTeclado() {
+        codeEditText.visibility = View.GONE
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        imm?.hideSoftInputFromWindow(codeEditText.windowToken, 0)
     }
 
     override fun onDestroy() {

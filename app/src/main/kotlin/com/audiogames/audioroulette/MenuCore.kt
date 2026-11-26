@@ -13,7 +13,7 @@ class MenuCore(
     private val onOpenSettings: () -> Unit,
     private val onOpenOnline: () -> Unit,
     private val onOpenAchievements: () -> Unit,
-    private val onCheckUpdate: () -> Unit,
+    private val onShowCredits: () -> Unit,
     private val onShowStats: () -> Unit,
     private val onOpenTutorialWeb: () -> Unit,
     private val onQuit: () -> Unit
@@ -46,7 +46,7 @@ class MenuCore(
         lista.add(Opcao("estatisticas", "Estatísticas: vitórias e derrotas"))
         lista.add(Opcao("configuracoes", "Configurações"))
         lista.add(Opcao("instrucoes", "Como jogar"))
-        lista.add(Opcao("verificar_atualizacao", "Verificar atualizações"))
+        lista.add(Opcao("creditos", "Créditos"))
         lista.add(Opcao("sair", "Sair"))
         return lista
     }
@@ -100,7 +100,7 @@ class MenuCore(
                 handler.postDelayed({ onOpenSettings() }, 300)
             }
             "instrucoes" -> playInstructions()
-            "verificar_atualizacao" -> onCheckUpdate()
+            "creditos" -> onShowCredits()
             "estatisticas" -> onShowStats()
             "sair" -> handler.postDelayed({ onQuit() }, 300)
         }
@@ -122,7 +122,7 @@ class MenuCore(
             "Deslize para cima ou para baixo para escolher um item, entre nove disponíveis.",
             "Toque duas vezes rápido na tela para atirar, ou para usar o item selecionado.",
             "Toque com dois dedos uma vez pra ouvir sua vida. Duas vezes, a vida do oponente. Três vezes, quantos cartuchos restam nessa rodada, sem revelar quantos são reais.",
-            "No começo de cada fase, você recebe de 2 a 4 itens sorteados automaticamente, com limite de 4 itens guardados ao mesmo tempo.",
+            "Toda vez que a espingarda é recarregada, você e o adversário recebem itens sorteados, com limite de 4 itens guardados ao mesmo tempo. As algemas fazem o oponente perder a próxima vez, mas não dá pra algemar de novo quem acabou de se soltar.",
             "No modo campanha, você enfrenta oito fases com história. No infinito, a dificuldade sobe pra sempre. No modo online, jogue com um amigo de verdade, cada um no seu celular. Se sair no meio de uma partida, pode continuar de onde parou depois, pelo menu. Existem conquistas pra desbloquear, veja no menu principal. Voltando ao menu."
         )
         for (i in 0 until linhas.size - 1) {
