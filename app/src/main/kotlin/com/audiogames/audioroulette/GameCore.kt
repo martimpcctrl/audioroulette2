@@ -281,6 +281,9 @@ class GameCore(
 
     private fun status(text: String) = onStatusUpdate(text)
 
+    // o nome que aparece na tela (o name interno é "player" ou "dealer", em inglês)
+    private fun nomeNaTela(f: Fighter): String = if (f === player) "Você" else "Dealer"
+
     private fun postDelay(ms: Long, action: () -> Unit) {
         handler.postDelayed(action, ms)
     }
@@ -522,7 +525,7 @@ class GameCore(
             }
         }
 
-        status("${user.name} usou $nome")
+        status("${nomeNaTela(user)} usou $nome")
     }
 
     // -------------------- DISPARO --------------------
@@ -551,7 +554,7 @@ class GameCore(
                 audio.vibrarTiroReal()
                 val falaExtra = if (target === dealer) Story.sorteiaDealerFerido() else Story.sorteiaJogadorFerido()
                 voice.say(falaExtra)
-                status("BALA REAL! ${target.name} sofreu $damage de dano. HP: ${target.hp}")
+                status("BALA REAL! ${nomeNaTela(target)} sofreu $damage de dano. Vida: ${target.hp}")
 
                 if (target.hp <= 0) {
                     // Se o alvo é o próprio atirador (tiro em si mesmo), quem
@@ -565,7 +568,7 @@ class GameCore(
                 audio.play("click_falso", target.pan)
                 audio.vibrarTiroFalso()
                 voice.say("Clique vazio.")
-                status("Clique vazio. ${target.name} está seguro.")
+                status("Clique vazio. ${if (target === player) "Você está seguro" else "O Dealer está seguro"}.")
                 afterShot(shooter, aimChoice, false)
             }
         }
